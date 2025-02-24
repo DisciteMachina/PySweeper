@@ -2,85 +2,79 @@ import pygame
 import random
 
 class PySweeper:
-    
-    
-    def __init__(self, width=800, height=640, grid_width=10, grid_height=10, num_mines=15):
+    def __init__(self):
         pygame.init()
         
         # Screen settings
-        self.WIDTH, self.HEIGHT = width, height
-        self.grid_width, self.grid_height = grid_width, grid_height
-        self.num_mines = num_mines
-        self.cell_size = self.WIDTH // self.grid_width 
-        self.screen = pygame.display.set_mode((self.WIDTH, self.HEIGHT))
+        self.window_size = 512
+        self.screen = pygame.display.set_mode((self.window_size, self.window_size))
         pygame.display.set_caption("PySweeper")
         
-        # Initialize grid and mine positions
-        self.grid = [[None for _ in range(self.grid_width)] for _ in range(self.grid_height)]
-        self.mines = set()
+        # Define grid size
+        self.rows = 16
+        self.cols = 16
+        
+        self.cell_size = self.window_size // self.rows
+        
+        # Grid line color
+        self.line_color = (255, 255, 255)
+        
+        # Initalize the grid
+        self.grid = [[None for _ in range(self.cols)] for _ in range(self.rows)]
+        
+        # Num of mines
+        self.num_mines = 40
+        
+        # Add the mines
         self.generate_mines()
         
-        # Running state
-        self.running = True
+        # Run the game
+        self.run_game()
         
     def generate_mines(self):
-        placed = 0
-        while placed < self.num_mines:
-            row = random.randint(0, self.grid_height - 1)
-            col = random.randint(0, self.grid_width - 1)
-            if (row, col) not in self.mines:
-                self.mines.add((row, col))
-                placed +=1
-    
+        mines = set()
+        
+        while len(mines) < self.num_mines:
+            # pick a random col and row 
+            # -1 because of python 0 indexing 
+            row = random.randint(0, self.rows - 1)
+            col = random.randint(0, self.cols - 1)
+            mines.add((row, col))
+            
+        for row in range(self.rows):
+            for col in range(self.cols):
+                if (row, col) in mines:
+                    self.grid[row][col] = "M" # Mine
+                else:
+                    self.grid[row][col] = 0 # Empty
+        
     def draw_grid(self):
-        for row in range(self.grid_height):
-            for col in range(self.grid_width):
-                
-                # Position and size of each cell
+        for row in range(self.rows):
+            for col in range(self.cols):
                 rect = pygame.Rect(col * self.cell_size, row * self.cell_size, self.cell_size, self.cell_size)
-                
-                # Cell color
-                pygame.draw.rect(self.screen, (200, 200, 200), rect)
-                pygame.draw.rect(self.screen, (0, 0, 0), rect, 2)
-                
-                # If cell is a mine
-                if (row, col) in self.mines:
-                    pygame.draw.circle(self.screen, (255, 0, 0), rect.center, self.cell_size // 4)
-                                
-    def handle_events(self):
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                self.running = False
-            elif event.type == pygame.MOUSEBUTTONDOWN:
-                x, y = pygame.mouse.get_pos()
-                row = y // self.cell_size
-                col = x // self.cell_size
-                self.handle_click(row, col)
-                
-    def handle_click(self, row, col):
-        if (row, col) in self.mines:
-            self.running = False
-        else:
-            pass
-                
-    def update(self):
-        pass
-    
-    def draw(self):
-        # White background
-        self.screen.fill((255, 255, 255))
-        self.draw_grid()
-        pygame.display.flip() 
-
-        
-    def run(self):
-        while self.running:
-            self.handle_events()
-            self.update()
-            self.draw()
-        
+                pygame.draw.rect(self.screen, self.line_color, rect, 1)  # Grid line
+                if self.grid[row][col] == "M":
+                    pygame.draw.circle(self.screen, (255, 0, 0), rect.center, 5)
+                    
+    def run_game(self):
+        running = True
+        while running:
+            self.screen.fill((0, 0, 0))
+            
+            # Draw grid
+            self.draw_grid()
+            
+            # Event handling
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    running = False
+                elif event.type == pygame.MOUSEBUTTONDOWN:
+                    if event.button == 1:
+                        pos = pygame.mouse.get_pos()
+                        col = pos[0] // self.cell_size
+                        row = pos[1] // self.cell_size
+                        print(f"Cell clicked: ({row}, {col})")
+            pygame.display.flip()
         pygame.quit()
-        
-if __name__ == "__main__":
-    game = PySweeper()
-    game.run()
+            
+game = PySweeper()
